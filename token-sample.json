@@ -1,0 +1,6 @@
+{
+    "type": "authorized_user",
+    "client_id": "ID",
+    "client_secret": "SECRET",
+    "refresh_token": "REFRESH"
+}
