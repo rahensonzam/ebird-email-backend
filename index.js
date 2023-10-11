@@ -150,11 +150,6 @@ async function getMessage(auth, messageId) {
     //     console.log('No messages found.');
     //     return;
     // }
-    // console.log('Messages:');
-    // messages.forEach((message) => {
-    //     console.log(`- ${message.id}`);
-    // });
-    // return messages;
 }
 
 
@@ -165,24 +160,23 @@ async function getMessage(auth, messageId) {
  */
 function parseMessage(messageContent) {
 
-    if (messageContent.payload.parts && messageContent.payload.parts.length > 0) {
-        let parts = messageContent.payload.parts;
-        if (parts[0].body.data) {
-            let data = parts[0].body.data;
-            console.log(data);
-            let buff = Buffer.from(data, 'base64');
-            let text = buff.toString('ascii');
-            return text;
+    // if (messageContent.payload.parts && messageContent.payload.parts.length > 0) {
+    let parts = messageContent.payload.parts;
+    if (parts[0].body.data) {
+        let data = parts[0].body.data;
+        console.log(data);
+        let buff = Buffer.from(data, 'base64');
+        let text = buff.toString('ascii');
+        return text;
 
-        }
     }
+    // }
 }
 
-// authorize().then(listLabels).catch(console.error);
-
-// authorize().then(listInbox).catch(console.error);
-
-// authorize().then(listLabels).then(authorize).then(listInbox).catch(console.error);
+function getSubstring(inputStr, startStr, endStr) {
+    let pos = inputStr.indexOf(startStr) + startStr.length;
+    return inputStr.substring(pos, inputStr.indexOf(endStr, pos));
+}
 
 async function main() {
 
@@ -195,28 +189,44 @@ async function main() {
             let messageContent = await getMessage(auth, message.id);
             console.log(`- ${message.id}`);
             // console.log("- messageContent",messageContent);
-            let text = parseMessage(messageContent);
-            console.log(text);
+            if (messageContent.payload.parts && messageContent.payload.parts.length > 0) {
+                let text = parseMessage(messageContent);
+                console.log(text);
+
+                if (text.includes("Needs Alert for Southern")) {
+
+                    let rare = false;
+                    let commonName;
+                    let scientificName;
+                    let dateReported;
+                    let reportedBy;
+                    let locationName;
+                    let lat1;
+                    let lng1;
+                    let mapLink;
+                    let checklistLink;
+
+                    let section = getSubstring(text, "visit: https://ebird.org/news/please-bird-mindfully", "***********");
+                    console.log("section", section);
+                }
+            }
         });
 
-        // messages.forEach(async (message) => {
-        //     let messageContent = await getMessage(auth, message.id);
-        //     console.log(`- ${message.id}`);
-        //     // console.log("- messageContent",messageContent);
-        //     if (messageContent.payload.parts && messageContent.payload.parts.length > 0) {
-        //         let parts = messageContent.payload.parts;
-        //         parts.forEach(async (part) => {
-        //             if (part.body.data) {
-        //                 let data = part.body.data;
-        //                 console.log(data);
-        //                 let buff = Buffer.from(data, 'base64');
-        //                 let text = buff.toString('ascii');
-        //                 console.log(text);
 
-        //             }
-        //         });
-        //     }
-        // });
+        // DONE
+        // create unique index listing these fields to avoid duplicate entries
+        // id
+        // rare
+        // *commonName
+        // *scientificName
+        // *dateReported
+        // *reportedBy
+        // locationName
+        // *lat1
+        // *lng1
+        // mapLink
+        // checklistLink
+
 
     } catch (error) {
         console.error(error);
