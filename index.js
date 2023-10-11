@@ -134,7 +134,7 @@ async function listInbox(auth) {
  * Gets a messages in the user's inbox.
  *
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
- * @param {string} messageId An authorized OAuth2 client.
+ * @param {string} messageId
  */
 async function getMessage(auth, messageId) {
     const gmail = google.gmail({ version: 'v1', auth });
@@ -157,6 +157,27 @@ async function getMessage(auth, messageId) {
     // return messages;
 }
 
+
+/**
+ * Parses the text from a message.
+ *
+ * @param {string} messageContent
+ */
+function parseMessage(messageContent) {
+
+    if (messageContent.payload.parts && messageContent.payload.parts.length > 0) {
+        let parts = messageContent.payload.parts;
+        if (parts[0].body.data) {
+            let data = parts[0].body.data;
+            console.log(data);
+            let buff = Buffer.from(data, 'base64');
+            let text = buff.toString('ascii');
+            return text;
+
+        }
+    }
+}
+
 // authorize().then(listLabels).catch(console.error);
 
 // authorize().then(listInbox).catch(console.error);
@@ -174,16 +195,8 @@ async function main() {
             let messageContent = await getMessage(auth, message.id);
             console.log(`- ${message.id}`);
             // console.log("- messageContent",messageContent);
-            if (messageContent.payload.parts && messageContent.payload.parts.length > 0) {
-                if (messageContent.payload.parts[0].body.data) {
-                    let data = messageContent.payload.parts[0].body.data;
-                    console.log(data);
-                    let buff = Buffer.from(data, 'base64');
-                    let text = buff.toString('ascii');
-                    console.log(text);
-
-                }
-            }
+            let text = parseMessage(messageContent);
+            console.log(text);
         });
 
         // messages.forEach(async (message) => {
