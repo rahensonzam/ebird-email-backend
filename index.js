@@ -159,8 +159,6 @@ async function getMessage(auth, messageId) {
  * @param {string} messageContent
  */
 function parseMessage(messageContent) {
-
-    // if (messageContent.payload.parts && messageContent.payload.parts.length > 0) {
     let parts = messageContent.payload.parts;
     if (parts[0].body.data) {
         let data = parts[0].body.data;
@@ -168,14 +166,24 @@ function parseMessage(messageContent) {
         let buff = Buffer.from(data, 'base64');
         let text = buff.toString('ascii');
         return text;
-
     }
-    // }
 }
 
 function getSubstring(inputStr, startStr, endStr) {
-    let pos = inputStr.indexOf(startStr) + startStr.length;
-    return inputStr.substring(pos, inputStr.indexOf(endStr, pos));
+    let startPos = inputStr.indexOf(startStr) + startStr.length;
+    let endPos = inputStr.indexOf(endStr, startPos);
+    return inputStr.substring(startPos, endPos);
+}
+
+function getSubstringFromStart(inputStr, endStr) {
+    let startPos = 0;
+    let endPos = inputStr.indexOf(endStr, startPos);
+    return inputStr.substring(startPos, endPos);
+}
+
+function getSubstringToEnd(inputStr, startStr) {
+    let startPos = inputStr.indexOf(startStr) + startStr.length;
+    return inputStr.substring(startPos);
 }
 
 async function main() {
@@ -206,8 +214,45 @@ async function main() {
                     let mapLink;
                     let checklistLink;
 
-                    let section = getSubstring(text, "visit: https://ebird.org/news/please-bird-mindfully", "***********");
+                    let section = getSubstring(text, "visit: https://ebird.org/news/please-bird-mindfully\r\n\r\n", "\r\n\r\n***********");
                     console.log("section", section);
+
+                    let sightingsList1 = section.split("\r\n\r\n");
+                    // let sightingsList1 = section.replace("\r\n", " ").split("\r\n\r\n");
+                    // console.log("sightingsList1", sightingsList1);
+
+                    let sightingsList2 = [];
+                    sightingsList1.forEach((string) => {
+                        sightingsList2.push(string.split("\r\n"));
+                        // sightingsList2.push(string.replace(/\\r\\n$/g, "").split(/^- /gm));
+                        // sightingsList2.push(string.split(/^- /gm));
+                        // sightingsList2.push(string.replaceAll("\r\n- "));
+                    });
+
+                    console.log("sightingsList2", sightingsList2);
+
+                    let sightingsList3 = [];
+                    sightingsList2.forEach((string) => {
+                        // for (let index = 0; index <= string.length - 1; index++) {
+                        let latLng = getSubstring(string[4], "&q=", "&ll");
+                        let latLngSplit = latLng.split(",");
+
+                        sightingsList3.push({
+                            rare: false,
+                            // commonName:,
+                            // scientificName:,
+                            dateReported: getSubstring(string[1], "- Reported ", " by"),
+                            reportedBy: getSubstringToEnd(string[1], "by "),
+                            locationName: getSubstringToEnd(string[2], "- "),
+                            lat1: latLngSplit[0],
+                            lng1: latLngSplit[1],
+                            mapLink: string[4],
+                            checklistLink: getSubstringToEnd(string[5], "- Checklist: ")
+                        });
+                        // }
+                    });
+
+                    console.log("sightingsList3", sightingsList3);
                 }
             }
         });
