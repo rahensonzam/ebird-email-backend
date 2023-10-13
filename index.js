@@ -186,6 +186,18 @@ function getSubstringToEnd(inputStr, startStr) {
     return inputStr.substring(startPos);
 }
 
+function getSubstringFromStartToSecondLast(inputStr, endStr) {
+    let startPos = 0;
+    let secondLastPos = inputStr.lastIndexOf(endStr, inputStr.lastIndexOf(endStr) - endStr.length);
+    return inputStr.substring(startPos, secondLastPos);
+}
+
+function getSubstringBetweenSecondLast(inputStr, startStr, endStr) {
+    let startPos = inputStr.lastIndexOf(startStr, inputStr.lastIndexOf(startStr) - startStr.length) + startStr.length;
+    let endPos = inputStr.lastIndexOf(endStr, inputStr.lastIndexOf(endStr) - endStr.length);
+    return inputStr.substring(startPos, endPos);
+}
+
 async function main() {
 
     try {
@@ -203,53 +215,40 @@ async function main() {
 
                 if (text.includes("Needs Alert for Southern")) {
 
-                    let rare = false;
-                    let commonName;
-                    let scientificName;
-                    let dateReported;
-                    let reportedBy;
-                    let locationName;
-                    let lat1;
-                    let lng1;
-                    let mapLink;
-                    let checklistLink;
-
                     let section = getSubstring(text, "visit: https://ebird.org/news/please-bird-mindfully\r\n\r\n", "\r\n\r\n***********");
                     console.log("section", section);
 
+                    section = section.replaceAll("\r\n- ", "|- ");
+
                     let sightingsList1 = section.split("\r\n\r\n");
-                    // let sightingsList1 = section.replace("\r\n", " ").split("\r\n\r\n");
                     // console.log("sightingsList1", sightingsList1);
 
                     let sightingsList2 = [];
                     sightingsList1.forEach((string) => {
-                        sightingsList2.push(string.split("\r\n"));
-                        // sightingsList2.push(string.replace(/\\r\\n$/g, "").split(/^- /gm));
-                        // sightingsList2.push(string.split(/^- /gm));
-                        // sightingsList2.push(string.replaceAll("\r\n- "));
+                        string = string.replaceAll("\r\n", " ");
+                        sightingsList2.push(string.split("|"));
                     });
 
                     console.log("sightingsList2", sightingsList2);
 
                     let sightingsList3 = [];
                     sightingsList2.forEach((string) => {
-                        // for (let index = 0; index <= string.length - 1; index++) {
-                        let latLng = getSubstring(string[4], "&q=", "&ll");
+                        let map = getSubstringToEnd(string[3], "- Map: ");
+                        let latLng = getSubstring(map, "&q=", "&ll");
                         let latLngSplit = latLng.split(",");
 
                         sightingsList3.push({
                             rare: false,
-                            // commonName:,
-                            // scientificName:,
+                            commonName: getSubstringFromStartToSecondLast(string[0], " ("),
+                            scientificName: getSubstringBetweenSecondLast(string[0], "(", ")"),
                             dateReported: getSubstring(string[1], "- Reported ", " by"),
                             reportedBy: getSubstringToEnd(string[1], "by "),
                             locationName: getSubstringToEnd(string[2], "- "),
                             lat1: latLngSplit[0],
                             lng1: latLngSplit[1],
-                            mapLink: string[4],
-                            checklistLink: getSubstringToEnd(string[5], "- Checklist: ")
+                            mapLink: map,
+                            checklistLink: getSubstringToEnd(string[4], "- Checklist: ")
                         });
-                        // }
                     });
 
                     console.log("sightingsList3", sightingsList3);
