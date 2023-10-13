@@ -154,19 +154,106 @@ async function getMessage(auth, messageId) {
 
 
 /**
+ * Parses the text from a multipart message.
+ *
+ * @param {string} messageContent
+ */
+function parseMultipartMessage(messageContent) {
+    let parts = messageContent.payload.parts;
+    if (parts[0].body.data) {
+        let data = parts[0].body.data;
+        console.log("data", data);
+        let buff = Buffer.from(data, 'base64');
+        let text = buff.toString('ascii');
+        return text;
+    }
+}
+
+/**
+ * Parses the text from a plain text message.
+ *
+ * @param {string} messageContent
+ */
+function parsePlainMessage(messageContent) {
+    if (messageContent.payload.body.data) {
+        let body = messageContent.payload.body.data;
+        console.log("body", body);
+        let buff = Buffer.from(body, 'base64');
+        let text = buff.toString('ascii');
+        return text;
+    }
+}
+
+/**
  * Parses the text from a message.
  *
  * @param {string} messageContent
  */
 function parseMessage(messageContent) {
-    let parts = messageContent.payload.parts;
-    if (parts[0].body.data) {
-        let data = parts[0].body.data;
-        console.log(data);
-        let buff = Buffer.from(data, 'base64');
-        let text = buff.toString('ascii');
-        return text;
+    if (messageContent.payload.mimeType === "text/plain") {
+        if (messageContent.payload.body.data) {
+            let data = messageContent.payload.body.data;
+            // console.log("data", data);
+            let buff = Buffer.from(data, 'base64');
+            let text = buff.toString('ascii');
+            return text;
+        }
     }
+    if (messageContent.payload.mimeType === "multipart/alternative") {
+        if (messageContent.payload.parts[0].body.data) {
+            let data = messageContent.payload.parts[0].body.data;
+            // console.log("data", data);
+            let buff = Buffer.from(data, 'base64');
+            let text = buff.toString('ascii');
+            return text;
+        }
+    }
+}
+
+/**
+ * Parses the bird list from the text.
+ *
+ * @param {string} text
+ * @param {boolean} rare
+ */
+function parseBirdList(text, rare) {
+    let section = getSubstring(text, "visit: https://ebird.org/news/please-bird-mindfully\r\n\r\n", "\r\n\r\n***********");
+    // console.log("section", section);
+
+    section = section.replaceAll("\r\n- ", "|- ");
+
+    let sightingsList1 = section.split("\r\n\r\n");
+    // console.log("sightingsList1", sightingsList1);
+
+    let sightingsList2 = [];
+    sightingsList1.forEach((string) => {
+        string = string.replaceAll("\r\n", " ");
+        sightingsList2.push(string.split("|"));
+    });
+
+    // console.log("sightingsList2", sightingsList2);
+
+    let sightingsList3 = [];
+    sightingsList2.forEach((string) => {
+        let map = getSubstringToEnd(string[3], "- Map: ");
+        let latLng = getSubstring(map, "&q=", "&ll");
+        let latLngSplit = latLng.split(",");
+
+        sightingsList3.push({
+            rare: rare,
+            commonName: getSubstringFromStartToSecondLast(string[0], " ("),
+            scientificName: getSubstringBetweenSecondLast(string[0], "(", ")"),
+            dateReported: getSubstring(string[1], "- Reported ", " by"),
+            reportedBy: getSubstringToEnd(string[1], "by "),
+            locationName: getSubstringToEnd(string[2], "- "),
+            lat1: latLngSplit[0],
+            lng1: latLngSplit[1],
+            mapLink: map,
+            checklistLink: getSubstringToEnd(string[4], "- Checklist: ")
+        });
+    });
+
+    return sightingsList3;
 }
 
 function getSubstring(inputStr, startStr, endStr) {
@@ -206,53 +293,20 @@ async function main() {
         let messages = await listInbox(auth);
 
         messages.forEach(async (message) => {
-            let messageContent = await getMessage(auth, message.id);
             console.log(`- ${message.id}`);
-            // console.log("- messageContent",messageContent);
-            if (messageContent.payload.parts && messageContent.payload.parts.length > 0) {
-                let text = parseMessage(messageContent);
-                console.log(text);
+            let messageContent = await getMessage(auth, message.id);
+            // console.log("- messageContent", messageContent);
+            let text = parseMessage(messageContent);
+            // console.log("text", text);
 
-                if (text.includes("Needs Alert for Southern")) {
+            if (text.includes("Needs Alert for Southern")) {
+                let sightingsList = parseBirdList(text, false);
+                console.log("sightingsList", sightingsList);
+            }
 
-                    let section = getSubstring(text, "visit: https://ebird.org/news/please-bird-mindfully\r\n\r\n", "\r\n\r\n***********");
-                    console.log("section", section);
-
-                    section = section.replaceAll("\r\n- ", "|- ");
-
-                    let sightingsList1 = section.split("\r\n\r\n");
-                    // console.log("sightingsList1", sightingsList1);
-
-                    let sightingsList2 = [];
-                    sightingsList1.forEach((string) => {
-                        string = string.replaceAll("\r\n", " ");
-                        sightingsList2.push(string.split("|"));
-                    });
-
-                    console.log("sightingsList2", sightingsList2);
-
-                    let sightingsList3 = [];
-                    sightingsList2.forEach((string) => {
-                        let map = getSubstringToEnd(string[3], "- Map: ");
-                        let latLng = getSubstring(map, "&q=", "&ll");
-                        let latLngSplit = latLng.split(",");
-
-                        sightingsList3.push({
-                            rare: false,
-                            commonName: getSubstringFromStartToSecondLast(string[0], " ("),
-                            scientificName: getSubstringBetweenSecondLast(string[0], "(", ")"),
-                            dateReported: getSubstring(string[1], "- Reported ", " by"),
-                            reportedBy: getSubstringToEnd(string[1], "by "),
-                            locationName: getSubstringToEnd(string[2], "- "),
-                            lat1: latLngSplit[0],
-                            lng1: latLngSplit[1],
-                            mapLink: map,
-                            checklistLink: getSubstringToEnd(string[4], "- Checklist: ")
-                        });
-                    });
-
-                    console.log("sightingsList3", sightingsList3);
-                }
+            if (text.includes("Southern Rare Bird Alert")) {
+                let sightingsList = parseBirdList(text, true);
+                console.log("sightingsList", sightingsList);
             }
         });
 
