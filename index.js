@@ -23,8 +23,7 @@ const process = require('process');
 const { authenticate } = require('@google-cloud/local-auth');
 const { google } = require('googleapis');
 const dayjs = require('dayjs');
-const options = require('./db.js');
-const pg = require('pg');
+const sql = require('./db.js');
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://mail.google.com'];
@@ -259,9 +258,6 @@ function getSubstringBetweenSecondLast(inputStr, startStr, endStr) {
 
 async function main() {
 
-    const client = new pg.Client();
-    await client.connect(options);
-
     try {
 
         let auth = await authorize();
@@ -284,7 +280,7 @@ async function main() {
                     let sightingsList = parseBirdList(text, false);
                     console.log("sightingsList", sightingsList);
                     // add to database
-                    const res = await client.query("SELECT NOW()");
+                    const res = await sql`SELECT NOW()`;
                     console.log("res", res);
                     // on success mark as read
 
@@ -315,8 +311,6 @@ async function main() {
 
     } catch (error) {
         console.error(error);
-    } finally {
-        await client.end();
     }
 
 }
