@@ -4,9 +4,10 @@
   "description": "A simple Node.js command-line application that makes requests to the Gmail API.",
   "private": true,
   "dependencies": {
-    "googleapis": "^105.0.0",
     "@google-cloud/local-auth": "^2.1.0",
-    "dayjs": "^1.11.10"
+    "dayjs": "^1.11.10",
+    "googleapis": "^105.0.0",
+    "pg": "^8.11.3"
   },
   "engines": {
     "node": ">=14"

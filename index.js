@@ -22,6 +22,9 @@ const path = require('path');
 const process = require('process');
 const { authenticate } = require('@google-cloud/local-auth');
 const { google } = require('googleapis');
+const dayjs = require('dayjs');
+const options = require('./db.js');
+const pg = require('pg');
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://mail.google.com'];
@@ -47,7 +50,7 @@ async function loadSavedCredentialsIfExist() {
 }
 
 /**
- * Serializes credentials to a file compatible with GoogleAUth.fromJSON.
+ * Serializes credentials to a file compatible with GoogleAuth.fromJSON.
  *
  * @param {OAuth2Client} client
  * @return {Promise<void>}
@@ -131,7 +134,7 @@ async function listInbox(auth) {
 }
 
 /**
- * Gets a messages in the user's inbox.
+ * Gets a message in the user's inbox.
  *
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  * @param {string} messageId
@@ -150,38 +153,6 @@ async function getMessage(auth, messageId) {
     //     console.log('No messages found.');
     //     return;
     // }
-}
-
-
-/**
- * Parses the text from a multipart message.
- *
- * @param {string} messageContent
- */
-function parseMultipartMessage(messageContent) {
-    let parts = messageContent.payload.parts;
-    if (parts[0].body.data) {
-        let data = parts[0].body.data;
-        console.log("data", data);
-        let buff = Buffer.from(data, 'base64');
-        let text = buff.toString('ascii');
-        return text;
-    }
-}
-
-/**
- * Parses the text from a plain text message.
- *
- * @param {string} messageContent
- */
-function parsePlainMessage(messageContent) {
-    if (messageContent.payload.body.data) {
-        let body = messageContent.payload.body.data;
-        console.log("body", body);
-        let buff = Buffer.from(body, 'base64');
-        let text = buff.toString('ascii');
-        return text;
-    }
 }
 
 /**
@@ -238,12 +209,13 @@ function parseBirdList(text, rare) {
         let map = getSubstringToEnd(string[3], "- Map: ");
         let latLng = getSubstring(map, "&q=", "&ll");
         let latLngSplit = latLng.split(",");
+        let date = getSubstring(string[1], "- Reported ", " by");
 
         sightingsList3.push({
             rare: rare,
             commonName: getSubstringFromStartToSecondLast(string[0], " ("),
             scientificName: getSubstringBetweenSecondLast(string[0], "(", ")"),
-            dateReported: getSubstring(string[1], "- Reported ", " by"),
+            dateReported: dayjs(date).format("YYYY-MM-DD HH:mm:ss"),
             reportedBy: getSubstringToEnd(string[1], "by "),
             locationName: getSubstringToEnd(string[2], "- "),
             lat1: latLngSplit[0],
@@ -287,6 +259,9 @@ function getSubstringBetweenSecondLast(inputStr, startStr, endStr) {
 
 async function main() {
 
+    const client = new pg.Client();
+    await client.connect(options);
+
     try {
 
         let auth = await authorize();
@@ -296,17 +271,29 @@ async function main() {
             console.log(`- ${message.id}`);
             let messageContent = await getMessage(auth, message.id);
             // console.log("- messageContent", messageContent);
-            let text = parseMessage(messageContent);
-            // console.log("text", text);
-
-            if (text.includes("Needs Alert for Southern")) {
-                let sightingsList = parseBirdList(text, false);
-                console.log("sightingsList", sightingsList);
+            let unread = false;
+            if (messageContent.labelIds.includes("UNREAD")) {
+                unread = true;
             }
 
-            if (text.includes("Southern Rare Bird Alert")) {
-                let sightingsList = parseBirdList(text, true);
-                console.log("sightingsList", sightingsList);
+            if (unread) {
+                let text = parseMessage(messageContent);
+                // console.log("text", text);
+
+                if (text.includes("Needs Alert for Southern")) {
+                    let sightingsList = parseBirdList(text, false);
+                    console.log("sightingsList", sightingsList);
+                    // add to database
+                    const res = await client.query("SELECT NOW()");
+                    console.log("res", res);
+                    // on success mark as read
+
+                }
+
+                if (text.includes("Southern Rare Bird Alert")) {
+                    let sightingsList = parseBirdList(text, true);
+                    console.log("sightingsList", sightingsList);
+                }
             }
         });
 
@@ -328,6 +315,8 @@ async function main() {
 
     } catch (error) {
         console.error(error);
+    } finally {
+        await client.end();
     }
 
 }
