@@ -8,13 +8,4 @@ const sql = postgres({
     port: 5432
 });
 
-async function myfunc() {
-
-    const res = await sql`SELECT NOW()`;
-    console.log("res", res);
-
-}
-
-myfunc();
-
 module.exports = { sql };

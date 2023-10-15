@@ -23,7 +23,7 @@ const process = require('process');
 const { authenticate } = require('@google-cloud/local-auth');
 const { google } = require('googleapis');
 const dayjs = require('dayjs');
-const sql = require('./db.js');
+const sql = require('./db.js').sql;
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://mail.google.com'];
@@ -264,7 +264,7 @@ async function main() {
         let messages = await listInbox(auth);
 
         messages.forEach(async (message) => {
-            console.log(`- ${message.id}`);
+            // console.log(`- ${message.id}`);
             let messageContent = await getMessage(auth, message.id);
             // console.log("- messageContent", messageContent);
             let unread = false;
@@ -280,15 +280,28 @@ async function main() {
                     let sightingsList = parseBirdList(text, false);
                     console.log("sightingsList", sightingsList);
                     // add to database
-                    const res = await sql`SELECT NOW()`;
-                    console.log("res", res);
-                    // on success mark as read
 
+                    let newlist = sightingsList.map((sighting) => {
+                        return `(${sighting.rare},"${sighting.commonName}","${sighting.scientificName}","${sighting.dateReported}","${sighting.reportedBy}","${sighting.locationName}","${sighting.lat1}","${sighting.lng1}","${sighting.mapLink}","${sighting.checklistLink}")`;
+                    });
+                    console.log("newlist", newlist);
+
+                    let values = newlist.join(",");
+
+                    console.log("values", values);
+
+                    let sqlString = `INSERT INTO birds (rare,commonName,scientificName,dateReported,reportedBy,locationName,lat1,lng1,mapLink,checklistLink)\nVALUES ${values};`;
+                    console.log("sqlString", sqlString);
+
+                    // const res = await sql`SELECT NOW()`;
+                    // console.log("res", res);
+                    // on success mark as read
                 }
+
 
                 if (text.includes("Southern Rare Bird Alert")) {
                     let sightingsList = parseBirdList(text, true);
-                    console.log("sightingsList", sightingsList);
+                    // console.log("sightingsList", sightingsList);
                 }
             }
         });
