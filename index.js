@@ -23,6 +23,7 @@ const process = require('process');
 const { authenticate } = require('@google-cloud/local-auth');
 const { google } = require('googleapis');
 const dayjs = require('dayjs');
+let express = require("express");
 const sql = require('./db.js').sql;
 
 // If modifying these scopes, delete token.json.
@@ -96,20 +97,21 @@ async function listLabels(auth) {
     const res = await gmail.users.labels.list({
         userId: 'me',
     });
-    console.log(res.data);
-    // const labels = res.data.labels;
-    // if (!labels || labels.length === 0) {
-    //   console.log('No labels found.');
-    //   return;
-    // }
+    // console.log("res.data", res.data);
+    const labels = res.data.labels;
+    if (!labels || labels.length === 0) {
+        console.log('No labels found.');
+        return;
+    }
     // console.log('Labels:');
     // labels.forEach((label) => {
     //   console.log(`- ${label.name}`);
     // });
+    return labels;
 }
 
 /**
- * Lists the messages in the user's inbox.
+ * Lists the messages in the user's mailbox.
  *
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
@@ -152,6 +154,32 @@ async function getMessage(auth, messageId) {
     //     console.log('No messages found.');
     //     return;
     // }
+}
+
+/**
+ * Removes UNREAD label from a message in the user's inbox.
+ *
+ * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
+ * @param {string} messageId
+ */
+async function removeUnreadLabel(auth, messageId) {
+    const gmail = google.gmail({ version: 'v1', auth });
+    const res = await gmail.users.messages.modify({
+        // The special value 'me' can be used to indicate the authenticated user.
+        userId: 'me',
+        id: messageId,
+        resource: {
+            "addLabelIds": [],
+            "removeLabelIds": ["UNREAD"]
+        }
+    });
+    // console.log(res.data);
+    // const messages = res.data.messages;
+    // if (!messages || messages.length === 0) {
+    //     console.log('No messages found.');
+    //     return;
+    // }
+    return res.data;
 }
 
 /**
@@ -256,9 +284,36 @@ function getSubstringBetweenSecondLast(inputStr, startStr, endStr) {
     return inputStr.substring(startPos, endPos);
 }
 
+async function addToDatabase(sightingsList) {
+    let newlist = sightingsList.map((sighting) => {
+        return `(${sighting.rare},'${sighting.commonName}','${sighting.scientificName}','${sighting.dateReported}','${sighting.reportedBy}','${sighting.locationName}','${sighting.lat1}','${sighting.lng1}','${sighting.mapLink}','${sighting.checklistLink}')`;
+    });
+    // console.log("newlist", newlist);
+
+    let values = newlist.join(",");
+
+    // console.log("values", values);
+
+    let sqlString = `INSERT INTO birds (rare,commonName,scientificName,dateReported,reportedBy,locationName,lat1,lng1,mapLink,checklistLink)\nVALUES ${values};`;
+    console.log("sqlString", sqlString);
+
+    // const res = await sql`${sqlString}`;
+    const res = await sql`SELECT NOW()`;
+    return res;
+}
+
 async function main() {
 
     try {
+
+        let server = express();
+        server.listen(3000, () => {
+            console.log("Server running on port 3000");
+        });
+        server.get("/api", async (req, res, next) => {
+            const data = await sql`SELECT * FROM birds`;
+            res.json(data);
+        });
 
         let auth = await authorize();
         let messages = await listInbox(auth);
@@ -278,30 +333,27 @@ async function main() {
 
                 if (text.includes("Needs Alert for Southern")) {
                     let sightingsList = parseBirdList(text, false);
-                    console.log("sightingsList", sightingsList);
+                    // console.log("sightingsList", sightingsList);
                     // add to database
-
-                    let newlist = sightingsList.map((sighting) => {
-                        return `(${sighting.rare},"${sighting.commonName}","${sighting.scientificName}","${sighting.dateReported}","${sighting.reportedBy}","${sighting.locationName}","${sighting.lat1}","${sighting.lng1}","${sighting.mapLink}","${sighting.checklistLink}")`;
-                    });
-                    console.log("newlist", newlist);
-
-                    let values = newlist.join(",");
-
-                    console.log("values", values);
-
-                    let sqlString = `INSERT INTO birds (rare,commonName,scientificName,dateReported,reportedBy,locationName,lat1,lng1,mapLink,checklistLink)\nVALUES ${values};`;
-                    console.log("sqlString", sqlString);
-
+                    const res = await addToDatabase(sightingsList);
                     // const res = await sql`SELECT NOW()`;
-                    // console.log("res", res);
+                    // const res = await sql`SELECT * FROM birds`;
+                    console.log("addToDatabase", res);
                     // on success mark as read
+                    // let labelReponse = await removeUnreadLabel(auth, message.id);
+                    // console.log("labelReponse", labelReponse.labelIds);
                 }
-
 
                 if (text.includes("Southern Rare Bird Alert")) {
                     let sightingsList = parseBirdList(text, true);
                     // console.log("sightingsList", sightingsList);
+                    // add to database
+                    const res = await addToDatabase(sightingsList);
+                    // const res = await sql`SELECT NOW()`;
+                    console.log("addToDatabase", res);
+                    // on success mark as read
+                    // let labelReponse = await removeUnreadLabel(auth, message.id);
+                    // console.log("labelReponse", labelReponse.labelIds);
                 }
             }
         });
