@@ -274,32 +274,35 @@ function getSubstringToEnd(inputStr, startStr) {
 
 function getSubstringFromStartToSecondLast(inputStr, endStr) {
     let startPos = 0;
-    let secondLastPos = inputStr.lastIndexOf(endStr, inputStr.lastIndexOf(endStr) - endStr.length);
+    let secondLastPos = inputStr.lastIndexOf(endStr, inputStr.lastIndexOf(endStr) - 1);
     return inputStr.substring(startPos, secondLastPos);
 }
 
 function getSubstringBetweenSecondLast(inputStr, startStr, endStr) {
     let startPos = inputStr.lastIndexOf(startStr, inputStr.lastIndexOf(startStr) - startStr.length) + startStr.length;
-    let endPos = inputStr.lastIndexOf(endStr, inputStr.lastIndexOf(endStr) - endStr.length);
+    let endPos = inputStr.lastIndexOf(endStr, inputStr.lastIndexOf(endStr) - 1);
     return inputStr.substring(startPos, endPos);
 }
 
 async function addToDatabase(sightingsList) {
-    let newlist = sightingsList.map((sighting) => {
-        return `(${sighting.rare},'${sighting.commonName}','${sighting.scientificName}','${sighting.dateReported}','${sighting.reportedBy}','${sighting.locationName}','${sighting.lat1}','${sighting.lng1}','${sighting.mapLink}','${sighting.checklistLink}')`;
+    sightingsList.forEach(async (sighting) => {
+        // return `(${sighting.rare},'${sighting.commonName}','${sighting.scientificName}','${sighting.dateReported}','${sighting.reportedBy}','${sighting.locationName}','${sighting.lat1}','${sighting.lng1}','${sighting.mapLink}','${sighting.checklistLink}')`;
+        // let sqlString = `INSERT INTO birds (rare,commonName,scientificName,dateReported,reportedBy,locationName,lat1,lng1,mapLink,checklistLink) VALUES ${values}`;
+        const res = await sql`INSERT INTO birds (rare,commonName,scientificName,dateReported,reportedBy,locationName,lat1,lng1,mapLink,checklistLink) VALUES (${sighting.rare},${sighting.commonName},${sighting.scientificName},${sighting.dateReported},${sighting.reportedBy},${sighting.locationName},${sighting.lat1},${sighting.lng1},${sighting.mapLink},${sighting.checklistLink})`;
     });
     // console.log("newlist", newlist);
 
-    let values = newlist.join(",");
+    // let values = newlist.join(",");
 
     // console.log("values", values);
 
-    let sqlString = `INSERT INTO birds (rare,commonName,scientificName,dateReported,reportedBy,locationName,lat1,lng1,mapLink,checklistLink)\nVALUES ${values};`;
-    console.log("sqlString", sqlString);
+    // let sqlString = `INSERT INTO birds (rare,commonName,scientificName,dateReported,reportedBy,locationName,lat1,lng1,mapLink,checklistLink) VALUES ${values}`;
+    // console.log("sqlString", sqlString);
 
-    // const res = await sql`${sqlString}`;
-    const res = await sql`SELECT NOW()`;
-    return res;
+    // const res2 = await sql`INSERT INTO birds (rare,commonName,scientificName,dateReported,reportedBy,locationName,lat1,lng1,mapLink,checklistLink) VALUES (false,'Knob-billed Duck','Sarkidiornis melanotos','2023-10-20 16:23:00','Anonymous eBirder','Waterberry Lodge, Southern','-17.832843','25.635978','http://maps.google.com/?ie=UTF8&t=p&z=13&q=-17.832843,25.635978&ll=-17.832843,25.635978','https://ebird.org/checklist/S152680441'),(false,'Spur-winged Goose','Plectropterus gambensis','2023-10-20 16:23:00','Anonymous eBirder','Waterberry Lodge, Southern','-17.832843','25.635978','http://maps.google.com/?ie=UTF8&t=p&z=13&q=-17.832843,25.635978&ll=-17.832843,25.635978','https://ebird.org/checklist/S152680441'),(false,'African Finfoot','Podica senegalensis','2023-10-20 16:31:00','Kaingu Safari Lodge','Kaingu Safari Lodge, Southern','-15.2977327','25.9798336','http://maps.google.com/?ie=UTF8&t=p&z=13&q=-15.2977327,25.9798336&ll=-15.2977327,25.9798336','https://ebird.org/checklist/S152675771'),(false,'African Wattled Lapwing','Vanellus senegallus','2023-10-20 16:31:00','Kaingu Safari Lodge','Kaingu Safari Lodge, Southern','-15.2977327','25.9798336','http://maps.google.com/?ie=UTF8&t=p&z=13&q=-15.2977327,25.9798336&ll=-15.2977327,25.9798336','https://ebird.org/checklist/S152675771'),(false,'Common Sandpiper','Actitis hypoleucos','2023-10-20 16:31:00','Kaingu Safari Lodge','Kaingu Safari Lodge, Southern','-15.2977327','25.9798336','http://maps.google.com/?ie=UTF8&t=p&z=13&q=-15.2977327,25.9798336&ll=-15.2977327,25.9798336','https://ebird.org/checklist/S152675771'),(false,'Rock Pratincole','Glareola nuchalis','2023-10-20 16:31:00','Kaingu Safari Lodge','Kaingu Safari Lodge, Southern','-15.2977327','25.9798336','http://maps.google.com/?ie=UTF8&t=p&z=13&q=-15.2977327,25.9798336&ll=-15.2977327,25.9798336','https://ebird.org/checklist/S152675771'),(false,'African Darter','Anhinga rufa','2023-10-20 16:31:00','Kaingu Safari Lodge','Kaingu Safari Lodge, Southern','-15.2977327','25.9798336','http://maps.google.com/?ie=UTF8&t=p&z=13&q=-15.2977327,25.9798336&ll=-15.2977327,25.9798336','https://ebird.org/checklist/S152675771'),(false,'Striated Heron','Butorides striata','2023-10-20 16:31:00','Kaingu Safari Lodge','Kaingu Safari Lodge, Southern','-15.2977327','25.9798336','http://maps.google.com/?ie=UTF8&t=p&z=13&q=-15.2977327,25.9798336&ll=-15.2977327,25.9798336','https://ebird.org/checklist/S152675771'),(false,'Lesser Masked Weaver','Ploceus intermedius','2023-10-20 16:31:00','Kaingu Safari Lodge','Kaingu Safari Lodge, Southern','-15.2977327','25.9798336','http://maps.google.com/?ie=UTF8&t=p&z=13&q=-15.2977327,25.9798336&ll=-15.2977327,25.9798336','https://ebird.org/checklist/S152675771')`;
+    // const res = await sql(sqlString);
+    // const res = await sql`SELECT NOW()`;
+    // return res;
 }
 
 async function main() {
@@ -318,42 +321,44 @@ async function main() {
         let auth = await authorize();
         let messages = await listInbox(auth);
 
-        messages.forEach(async (message) => {
-            // console.log(`- ${message.id}`);
-            let messageContent = await getMessage(auth, message.id);
-            // console.log("- messageContent", messageContent);
-            let unread = false;
-            if (messageContent.labelIds.includes("UNREAD")) {
-                unread = true;
-            }
-
-            if (unread) {
-                let text = parseMessage(messageContent);
-                // console.log("text", text);
-
-                if (text.includes("Needs Alert for Southern")) {
-                    let sightingsList = parseBirdList(text, false);
-                    // console.log("sightingsList", sightingsList);
-                    // add to database
-                    const res = await addToDatabase(sightingsList);
-                    // const res = await sql`SELECT NOW()`;
-                    // const res = await sql`SELECT * FROM birds`;
-                    console.log("addToDatabase", res);
-                    // on success mark as read
-                    // let labelReponse = await removeUnreadLabel(auth, message.id);
-                    // console.log("labelReponse", labelReponse.labelIds);
+        messages.forEach(async (message, i) => {
+            if (i === 0) {
+                // console.log(`- ${message.id}`);
+                let messageContent = await getMessage(auth, message.id);
+                // console.log("- messageContent", messageContent);
+                let unread = false;
+                if (messageContent.labelIds.includes("UNREAD")) {
+                    unread = true;
                 }
 
-                if (text.includes("Southern Rare Bird Alert")) {
-                    let sightingsList = parseBirdList(text, true);
-                    // console.log("sightingsList", sightingsList);
-                    // add to database
-                    const res = await addToDatabase(sightingsList);
-                    // const res = await sql`SELECT NOW()`;
-                    console.log("addToDatabase", res);
-                    // on success mark as read
-                    // let labelReponse = await removeUnreadLabel(auth, message.id);
-                    // console.log("labelReponse", labelReponse.labelIds);
+                if (unread) {
+                    let text = parseMessage(messageContent);
+                    // console.log("text", text);
+
+                    if (text.includes("Needs Alert for Southern")) {
+                        let sightingsList = parseBirdList(text, false);
+                        // console.log("sightingsList", sightingsList);
+                        // add to database
+                        const res = await addToDatabase(sightingsList);
+                        // const res = await sql`SELECT NOW()`;
+                        // const res = await sql`SELECT * FROM birds`;
+                        console.log("addToDatabase", res);
+                        // on success mark as read
+                        let labelReponse = await removeUnreadLabel(auth, message.id);
+                        console.log("labelReponse", labelReponse.labelIds);
+                    }
+
+                    if (text.includes("Southern Rare Bird Alert")) {
+                        let sightingsList = parseBirdList(text, true);
+                        // console.log("sightingsList", sightingsList);
+                        // add to database
+                        const res = await addToDatabase(sightingsList);
+                        // const res = await sql`SELECT NOW()`;
+                        console.log("addToDatabase", res);
+                        // on success mark as read
+                        let labelReponse = await removeUnreadLabel(auth, message.id);
+                        console.log("labelReponse", labelReponse.labelIds);
+                    }
                 }
             }
         });
