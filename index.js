@@ -285,7 +285,7 @@ function getSubstringBetweenSecondLast(inputStr, startStr, endStr) {
 }
 
 async function addToDatabase(sightingsList) {
-    console.log("starting");
+    // console.log("starting");
     let reponses = sightingsList.map(async (sighting) => {
         const res = await sql`INSERT INTO birds (rare,commonName,scientificName,dateReported,reportedBy,locationName,lat1,lng1,mapLink,checklistLink) VALUES (${sighting.rare},${sighting.commonName},${sighting.scientificName},${sighting.dateReported},${sighting.reportedBy},${sighting.locationName},${sighting.lat1},${sighting.lng1},${sighting.mapLink},${sighting.checklistLink})`;
         return res;
@@ -311,13 +311,13 @@ async function main() {
         let auth = await authorize();
         let messages = await listInbox(auth);
 
-        console.log("listInbox done");
+        // console.log("listInbox done");
 
         messages.forEach(async (message, i) => {
             // if (i === 0) {
             // console.log(`- ${message.id}`);
             let messageContent = await getMessage(auth, message.id);
-            console.log("getMessage done");
+            // console.log("getMessage done");
             // console.log("- messageContent", messageContent);
             let unread = false;
             if (messageContent.labelIds.includes("UNREAD")) {
@@ -327,7 +327,7 @@ async function main() {
             if (unread) {
                 let text = parseMessage(messageContent);
                 // console.log("text", text);
-                console.log("parseMessage done");
+                // console.log("parseMessage done");
 
                 if (text.includes("Needs Alert for Southern")) {
                     let sightingsList = parseBirdList(text, false);
@@ -338,8 +338,8 @@ async function main() {
                     // const res = await sql`SELECT * FROM birds`;
                     console.log("addToDatabase", res);
                     // on success mark as read
-                    // let labelReponse = await removeUnreadLabel(auth, message.id);
-                    // console.log("labelReponse", labelReponse.labelIds);
+                    let labelReponse = await removeUnreadLabel(auth, message.id);
+                    console.log("labelReponse", labelReponse.labelIds);
                 }
 
                 if (text.includes("Southern Rare Bird Alert")) {
@@ -350,8 +350,8 @@ async function main() {
                     // const res = await sql`SELECT NOW()`;
                     console.log("addToDatabase", res);
                     // on success mark as read
-                    // let labelReponse = await removeUnreadLabel(auth, message.id);
-                    // console.log("labelReponse", labelReponse.labelIds);
+                    let labelReponse = await removeUnreadLabel(auth, message.id);
+                    console.log("labelReponse", labelReponse.labelIds);
                 }
             }
             // }

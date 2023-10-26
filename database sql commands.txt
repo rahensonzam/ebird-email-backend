@@ -1,0 +1,25 @@
+CREATE DATABASE birds;
+
+CREATE TABLE birds(
+    id SERIAL PRIMARY KEY,
+    rare BOOLEAN,
+    commonName TEXT,
+    scientificName TEXT,
+    dateReported TIMESTAMP,
+    reportedBy TEXT,
+    locationName TEXT,
+    lat1 FLOAT,
+    lng1 FLOAT,
+    mapLink TEXT,
+    checklistLink TEXT
+);
+
+CREATE UNIQUE INDEX birds_unique_index
+ON birds(
+    commonName,
+    scientificName,
+    dateReported,
+    reportedBy,
+    lat1,
+    lng1
+);

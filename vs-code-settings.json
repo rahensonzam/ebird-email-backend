@@ -1,0 +1,12 @@
+C:\Users\User\AppData\Roaming\Code\User\settings.json
+
+{
+    "liveServer.settings.CustomBrowser": "chrome",
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "editor.formatOnSave": true
+}
