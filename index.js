@@ -292,7 +292,7 @@ async function addToDatabase(sightingsList) {
         return res;
     });
 
-    reponses = Promise.all(reponses);
+    reponses = await Promise.all(reponses);
     return reponses;
 }
 
@@ -317,7 +317,7 @@ async function main() {
 
         // console.log("listInbox done");
 
-        messages.forEach(async (message, i) => {
+        let results = messages.map(async (message, i) => {
             // if (i === 0) {
             // console.log(`- ${message.id}`);
             let messageContent = await getMessage(auth, message.id);
@@ -336,10 +336,7 @@ async function main() {
                 if (text.includes("Needs Alert for Southern")) {
                     let sightingsList = parseBirdList(text, false);
                     // console.log("sightingsList", sightingsList);
-                    // add to database
                     const res = await addToDatabase(sightingsList);
-                    // const res = await sql`SELECT NOW()`;
-                    // const res = await sql`SELECT * FROM birds`;
                     console.log("addToDatabase", res);
                     // on success mark as read
                     let labelReponse = await removeUnreadLabel(auth, message.id);
@@ -349,9 +346,7 @@ async function main() {
                 if (text.includes("Southern Rare Bird Alert")) {
                     let sightingsList = parseBirdList(text, true);
                     // console.log("sightingsList", sightingsList);
-                    // add to database
                     const res = await addToDatabase(sightingsList);
-                    // const res = await sql`SELECT NOW()`;
                     console.log("addToDatabase", res);
                     // on success mark as read
                     let labelReponse = await removeUnreadLabel(auth, message.id);
@@ -361,6 +356,7 @@ async function main() {
             // }
         });
 
+        await Promise.all(results);
 
         // DONE
         // create unique index listing these fields to avoid duplicate entries
