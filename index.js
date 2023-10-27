@@ -25,6 +25,7 @@ const { google } = require('googleapis');
 const dayjs = require('dayjs');
 let express = require("express");
 const sql = require('./db.js').sql;
+const cors = require('cors');
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://mail.google.com'];
@@ -303,6 +304,9 @@ async function main() {
         server.listen(3000, () => {
             console.log("Server running on port 3000");
         });
+        server.use(cors({
+            origin: "*"
+        }));
         server.get("/api", async (req, res, next) => {
             const data = await sql`SELECT * FROM birds`;
             res.json(data);
