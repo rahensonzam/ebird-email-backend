@@ -194,7 +194,7 @@ function parseMessage(messageContent) {
             let data = messageContent.payload.body.data;
             // console.log("data", data);
             let buff = Buffer.from(data, 'base64');
-            let text = buff.toString('ascii');
+            let text = buff.toString('utf8');
             return text;
         }
     }
@@ -203,7 +203,7 @@ function parseMessage(messageContent) {
             let data = messageContent.payload.parts[0].body.data;
             // console.log("data", data);
             let buff = Buffer.from(data, 'base64');
-            let text = buff.toString('ascii');
+            let text = buff.toString('utf8');
             return text;
         }
     }
@@ -333,18 +333,16 @@ async function main() {
                 // console.log("text", text);
                 // console.log("parseMessage done");
 
-                if (text.includes("Needs Alert for Southern")) {
-                    let sightingsList = parseBirdList(text, false);
-                    // console.log("sightingsList", sightingsList);
-                    const res = await addToDatabase(sightingsList);
-                    console.log("addToDatabase", res);
-                    // on success mark as read
-                    let labelReponse = await removeUnreadLabel(auth, message.id);
-                    console.log("labelReponse", labelReponse.labelIds);
+                let unseen = "Needs Alert for Southern";
+                let rare = "Southern Rare Bird Alert";
+                let isRare = false;
+
+                if (text.includes(rare)) {
+                    isRare = true;
                 }
 
-                if (text.includes("Southern Rare Bird Alert")) {
-                    let sightingsList = parseBirdList(text, true);
+                if (text.includes(unseen) || text.includes(rare)) {
+                    let sightingsList = parseBirdList(text, isRare);
                     // console.log("sightingsList", sightingsList);
                     const res = await addToDatabase(sightingsList);
                     console.log("addToDatabase", res);
