@@ -238,11 +238,30 @@ function parseBirdList(text, rare) {
         let latLng = getSubstring(map, "&q=", "&ll");
         let latLngSplit = latLng.split(",");
         let date = getSubstring(string[1], "- Reported ", " by");
+        let commonName;
+        let scientificName;
+
+        if (string[0].includes("Exotic: Naturalized")) {
+            commonName = getSubstringFromStartToThirdLast(string[0], " (");
+            commonName += " (Exotic: Naturalized)";
+        } else if (!(string[0].match(/\(/g).length >= 2)) {
+            commonName = getSubstringFromStartToLast(string[0], " (");
+        } else {
+            commonName = getSubstringFromStartToSecondLast(string[0], " (");
+        }
+
+        if (string[0].includes("Exotic: Naturalized")) {
+            scientificName = getSubstringBetweenThirdLast(string[0], "(", ")");
+        } else if (!(string[0].match(/\(/g).length >= 2)) {
+            scientificName = getSubstringBetweenLast(string[0], "(", ")");
+        } else {
+            scientificName = getSubstringBetweenSecondLast(string[0], "(", ")");
+        }
 
         sightingsList3.push({
             rare: rare,
-            commonName: getSubstringFromStartToSecondLast(string[0], " ("),
-            scientificName: getSubstringBetweenSecondLast(string[0], "(", ")"),
+            commonName: commonName,
+            scientificName: scientificName,
             dateReported: dayjs(date).format("YYYY-MM-DD HH:mm:ss"),
             reportedBy: getSubstringToEnd(string[1], "by "),
             locationName: getSubstringToEnd(string[2], "- "),
@@ -273,6 +292,18 @@ function getSubstringToEnd(inputStr, startStr) {
     return inputStr.substring(startPos);
 }
 
+function getSubstringFromStartToLast(inputStr, endStr) {
+    let startPos = 0;
+    let lastPos = inputStr.lastIndexOf(endStr);
+    return inputStr.substring(startPos, lastPos);
+}
+
+function getSubstringBetweenLast(inputStr, startStr, endStr) {
+    let startPos = inputStr.lastIndexOf(startStr) + startStr.length;
+    let endPos = inputStr.lastIndexOf(endStr);
+    return inputStr.substring(startPos, endPos);
+}
+
 function getSubstringFromStartToSecondLast(inputStr, endStr) {
     let startPos = 0;
     let secondLastPos = inputStr.lastIndexOf(endStr, inputStr.lastIndexOf(endStr) - 1);
@@ -282,6 +313,18 @@ function getSubstringFromStartToSecondLast(inputStr, endStr) {
 function getSubstringBetweenSecondLast(inputStr, startStr, endStr) {
     let startPos = inputStr.lastIndexOf(startStr, inputStr.lastIndexOf(startStr) - startStr.length) + startStr.length;
     let endPos = inputStr.lastIndexOf(endStr, inputStr.lastIndexOf(endStr) - 1);
+    return inputStr.substring(startPos, endPos);
+}
+
+function getSubstringFromStartToThirdLast(inputStr, endStr) {
+    let startPos = 0;
+    let thirdLastPos = inputStr.lastIndexOf(endStr, inputStr.lastIndexOf(endStr, inputStr.lastIndexOf(endStr) - 1) - 1);
+    return inputStr.substring(startPos, thirdLastPos);
+}
+
+function getSubstringBetweenThirdLast(inputStr, startStr, endStr) {
+    let startPos = inputStr.lastIndexOf(startStr, inputStr.lastIndexOf(startStr, inputStr.lastIndexOf(startStr) - startStr.length) - startStr.length) + startStr.length;
+    let endPos = inputStr.lastIndexOf(endStr, inputStr.lastIndexOf(endStr, inputStr.lastIndexOf(endStr) - 1) - 1);
     return inputStr.substring(startPos, endPos);
 }
 
